@@ -110,7 +110,7 @@ for id in $IDS; do
       # 轮换：只有明确点名的机器才动，避免和沙箱里的 loop 抢
       if [ -n "$ROTATE_IDS" ] && in_list "$ROTATE_IDS" "$id" && [ "$age" -ge $((ROTATE_MIN * 60)) ]; then
         log "$id 跑满 $((age / 60)) 分钟，主动轮换"
-        api POST "/v1/machines/$id/suspend" '{"timeoutSeconds":60}' >/dev/null
+        api POST "/v1/machines/$id/suspend" >/dev/null
         i=0
         while [ $i -lt 20 ]; do
           sleep 2
