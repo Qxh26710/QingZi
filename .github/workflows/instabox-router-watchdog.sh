@@ -52,14 +52,18 @@ have_curl() { command -v curl >/dev/null 2>&1; }
 # 返回 body；HTTP 非 2xx 时 body 里带着平台给的错误信息
 api() {
   _m="$1"; _p="$2"; _b="${3:-}"
+  _ik=""
+  case "$_p" in
+    */suspend|*/resume|*/start|*/stop)
+      API_N=$(( ${API_N:-0} + 1 ))
+      _ik="wd-$(date -u +%s)-$$-$API_N" ;;
+  esac
+  set -- -sS --max-time 20 -X "$_m" -H "X-API-Key: $KEY"
+  [ -n "$_ik" ] && set -- "$@" -H "Idempotency-Key: $_ik"
   if [ -n "$_b" ]; then
-    curl -sS --max-time 20 -X "$_m" \
-      -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
-      --data "$_b" "$API$_p" 2>&1
-  else
-    curl -sS --max-time 20 -X "$_m" \
-      -H "X-API-Key: $KEY" "$API$_p" 2>&1
+    set -- "$@" -H 'Content-Type: application/json' --data "$_b"
   fi
+  curl "$@" "$API$_p" 2>&1
 }
 
 # 从 JSON 里抠一个字符串字段（够用就行，不做完整解析）
@@ -114,7 +118,7 @@ for id in $IDS; do
           [ "$s" = "suspended" ] && break
           i=$((i + 1))
         done
-        api POST "/v1/machines/$id/resume" >/dev/null && log "$id 已 resume"
+        api POST "/v1/machines/$id/suspend" >/dev/null
         continue
       fi
       if [ "$EXEC" = "1" ]; then
