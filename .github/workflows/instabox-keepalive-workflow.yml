@@ -1,0 +1,52 @@
+name: instabox-keepalive
+
+# 把路由器上的那只 watchdog 挪到 GitHub Actions 里跑——不需要任何常开硬件。
+# 每 10 分钟一次：睡着就叫醒，醒着就 exec 一次防闲置，跑满 470 分钟就主动轮换。
+#
+# 装法（一次性，约 3 分钟）：
+#   1. GitHub 上建一个仓库（private 也行）
+#   2. 把仓库里的 instabox-router-watchdog.sh 原样传上去（跟本文件同目录）
+#   3. 本文件放到 .github/workflows/instabox-keepalive.yml
+#   4. 仓库 Settings → Secrets and variables → Actions
+#        Secrets:   INSTABOX_API_KEY   = ibk_...（就是沙箱里那把）
+#        Variables: INSTABOX_MACHINE_IDS = m_agrb2fevhf7xy4urszvzk6uzqy
+#        Variables: INSTABOX_ROTATE_IDS  = m_agrb2fevhf7xy4urszvzk6uzqy
+#        留空 Variables 也行，脚本会自己拉整个账号的机器列表
+#   5. Actions 标签页 → 选中这个 workflow → Run workflow 试一次
+#
+# 注意：
+#   - GitHub 的定时任务不准时，高峰期可能晚 5–15 分钟；每 10 分钟一次是因为闲置线是 30 分钟，留了两次余量
+#   - 仓库 60 天没有任何提交，GitHub 会自动停掉定时 workflow
+#   - 私有仓库按分钟计费：每趟约 15 秒，一天 144 趟 ≈ 1100 分钟/月，免费额度 2000
+#   - 公开仓库不计费
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: instabox-keepalive
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 保活一拍
+        env:
+          KEY: ${{ secrets.INSTABOX_API_KEY }}
+          MACHINES: ${{ vars.INSTABOX_MACHINE_IDS }}
+          ROTATE_IDS: ${{ vars.INSTABOX_ROTATE_IDS }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::error::没有配 INSTABOX_API_KEY secret"
+            exit 1
+          fi
+          sh ./instabox-router-watchdog.sh
