@@ -1,0 +1,17 @@
+name: keepalive
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh ./instabox-router-watchdog.sh
+        env:
+          KEY: ${{ secrets.INSTABOX_API_KEY }}
+          ROTATE_IDS: m_agrb2fevhf7xy4urszvzk6uzqy
