@@ -14,5 +14,6 @@ jobs:
       - name: 保活一拍
         env:
           KEY: ${{ secrets.INSTABOX_API_KEY }}
+          MACHINES: m_agrb2fevhf7xy4urszvzk6uzqy
           ROTATE_IDS: m_agrb2fevhf7xy4urszvzk6uzqy
         run: sh ./.github/workflows/instabox-router-watchdog.sh
