@@ -130,14 +130,14 @@ for id in $IDS; do
     suspended)
       r="$(api POST "/v1/machines/$id/resume")"
       case "$r" in
-        *error*|*"HTTP"*) log "$id resume 失败（冷却中？）: $(printf '%s' "$r" | cut -c1-160)"; rc=1 ;;
+        *'"error":{'*|*"HTTP"*) log "$id resume 失败（冷却中？）: $(printf '%s' "$r" | cut -c1-160)"; rc=1 ;;
         *) log "$id 已 resume" ;;
       esac
       ;;
     stopped)
       r="$(api POST "/v1/machines/$id/start")"
       case "$r" in
-        *error*|*"HTTP"*) log "$id start 失败: $(printf '%s' "$r" | cut -c1-160)"; rc=1 ;;
+        *'"error":{'*|*"HTTP"*) log "$id start 失败: $(printf '%s' "$r" | cut -c1-160)"; rc=1 ;;
         *) log "$id 已 start" ;;
       esac
       ;;
